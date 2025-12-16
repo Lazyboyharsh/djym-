@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DJYM Payslip</title>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Tinos:wght@400;700&display=swap');
+
+        /* --- GLOBAL STYLES --- */
+        body { font-family: 'Tinos', serif; background-color: #f0f0f0; display: flex; flex-direction: column; align-items: center; padding: 10px; margin: 0; }
+        
+        /* Receipt Box - Added overflow:hidden for watermark */
+        .receipt-box { 
+            width: 100%; max-width: 800px; background-color: #fff8e1; 
+            border: 4px dashed #800000; padding: 20px; color: #800000; 
+            position: relative; box-sizing: border-box; overflow: hidden;
+        }
+
+        /* --- WATERMARK STYLING (NEW) --- */
+        .watermark {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            /* Center and rotate */
+            transform: translate(-50%, -50%) rotate(-30deg);
+            font-size: clamp(80px, 15vw, 150px); /* Responsive font size */
+            font-family: 'Roboto', sans-serif;
+            font-weight: 900;
+            color: #800000;
+            opacity: 0.08; /* Very transparent */
+            z-index: 0; /* Sit behind text */
+            pointer-events: none; /* Let clicks pass through to inputs */
+            user-select: none;
+            white-space: nowrap;
+        }
+        
+        /* Ensure content sits above watermark so inputs work */
+        .header, .row, .footer-row {
+            position: relative;
+            z-index: 2; 
+        }
+        
+        /* Header */
+        .header { text-align: center; margin-bottom: 20px; }
+        .org-name { font-size: clamp(20px, 5vw, 32px); font-weight: 800; text-transform: uppercase; font-family: 'Roboto', sans-serif; }
+        
+        /* Logo (higher z-index) */
+        .logo { position: absolute; top: 10px; left: 10px; width: 60px; height: 60px; z-index: 10; }
+        .logo img { width: 100%; height: auto; }
+
+        /* Rows & Inputs */
+        .row { display: flex; justify-content: space-between; flex-wrap: wrap; margin-bottom: 12px; font-size: 18px; font-weight: bold; gap: 10px; }
+        input { border: none; background: transparent; border-bottom: 1px dotted #800000; font-family: 'Courier New', monospace; font-size: 18px; color: #000080; font-weight: bold; width: 100%; outline: none; }
+        .input-group { flex-grow: 1; min-width: 200px; display: flex; align-items: center; }
+        .input-group label { white-space: nowrap; margin-right: 10px; }
+        
+        /* Footer */
+        .footer-row { display: flex; justify-content: space-between; margin-top: 30px; flex-wrap: wrap; align-items: flex-end; }
+        .amount-box { border: 2px solid #800000; border-radius: 10px; padding: 10px 20px; font-size: 24px; font-weight: bold; }
+        
+        /* Signature */
+        .signature-area { text-align: center; width: 180px; }
+        .sign-img { height: 50px; border-bottom: 1px solid #800000; margin-bottom: 5px; display:flex; align-items:flex-end; justify-content:center;}
+        .sign-img img { max-height: 100%; max-width: 100%; }
+
+        /* Controls */
+        .controls { margin-top: 20px; width: 100%; max-width: 600px; display: flex; flex-direction: column; gap: 10px; }
+        .btn-row { display: flex; gap: 10px; }
+        button { padding: 15px; font-size: 16px; color: white; border: none; cursor: pointer; border-radius: 8px; font-weight: bold; width: 100%; }
+        .btn-green { background-color: #27ae60; } 
+        .btn-orange { background-color: #d35400; }
+        .btn-blue { background-color: #2980b9; }
+        .btn-gray { background-color: #7f8c8d; font-size: 14px; padding: 10px; }
+
+        /* History Table */
+        #historySection { display: none; margin-top: 20px; width: 100%; max-width: 800px; background: white; padding: 20px; border-radius: 10px; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; min-width: 500px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #eee; }
+
+        @media (max-width: 600px) {
+            .logo { position: relative; top: 0; left: 0; margin: 0 auto 10px auto; display:block; }
+            .row { flex-direction: column; align-items: flex-start; gap: 5px; }
+            .footer-row { flex-direction: column; align-items: center; gap: 20px; }
+            .btn-row { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="receipt-box" id="receipt">
+        <div class="watermark">DJYM</div>
+
+        <div class="logo"><img src="logo.png" onerror="this.style.display='none'"></div>
+
+        <div class="header">
+            <div style="font-size:14px; font-weight:bold;">!! Shri Mahaviraya Namah !!</div>
+            <div class="org-name">DHARAM JAGRITI YUVA MANDAL (DJYM)</div>
+            <div style="font-weight:bold;">UTTAM NAGAR, NEW DELHI - 110059</div>
+            <div style="font-weight:bold;">Contact No. : 9810765996, 9975080760</div>
+        </div>
+
+        <div class="row">
+            <div class="input-group" style="flex-grow:0;">
+                <label>No.</label>
+                <input type="text" id="slipNo" style="width:80px; text-align:center;" readonly>
+            </div>
+            <div class="input-group" style="justify-content: flex-end;">
+                <label>Dated</label>
+                <input type="date" id="dateField">
+            </div>
+        </div>
+
+        <div class="row"><div class="input-group"><label>Received from M/s</label><input type="text" id="nameField"></div></div>
+        <div class="row"><div class="input-group"><label>Address</label><input type="text" id="addrField"></div></div>
+        <div class="row"><div class="input-group"><label>the sum of Rupees</label><input type="text" id="amountWords"></div></div>
+        <div class="row"><div class="input-group"><label>Purpose</label><input type="text" id="purposeField" value="Annual Rashi"></div></div>
+
+        <div class="row">
+            <div class="input-group" style="flex-grow:0;">
+                <label>Cash</label>
+                <input type="text" style="width:60px;" value="Cash">
+            </div>
+            <div class="input-group">
+                <label>Online Txn</label>
+                <input type="text" id="modeOnline" placeholder="UPI / Ref No">
+            </div>
+        </div>
+
+        <div class="footer-row">
+            <div class="amount-box">Rs. <input type="number" id="amountNum" placeholder="0" style="width:100px; border:none; font-size:24px;"> /-</div>
+            <div class="signature-area">
+                <div class="sign-img">
+                    <img src="sign.png" alt="Sign" onerror="this.style.display='none'">
+                </div>
+                <div>Receiver Signature</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button class="btn-orange" onclick="downloadImage()">📸 Download Receipt Image</button>
+        <button class="btn-green" onclick="generateNextSlip()">➡️ Next Slip (Save & Clear)</button>
+        
+        <div class="btn-row">
+            <button class="btn-blue" onclick="toggleHistory()">📜 View History</button>
+            <button class="btn-gray" onclick="resetCounter()">⚠️ Set Start Number</button>
+        </div>
+    </div>
+
+    <div id="historySection">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h3>Saved History</h3>
+            <button class="btn-gray" style="width:auto;" onclick="exportCSV()">⬇️ Download Excel/CSV</button>
+        </div>
+        <table>
+            <thead><tr><th>No.</th><th>Name</th><th>Amount</th><th>Mode</th></tr></thead>
+            <tbody id="historyBody"></tbody>
+        </table>
+    </div>
+
+    <script>
+        window.onload = function() {
+            loadSlipNumber();
+            document.getElementById('dateField').value = new Date().toISOString().split('T')[0];
+            renderHistoryTable();
+        };
+
+        // 1. Generate Next Slip
+        function generateNextSlip() {
+            const onlineVal = document.getElementById('modeOnline').value;
+            const mode = onlineVal.trim() !== "" ? "Online (" + onlineVal + ")" : "Cash";
+            const name = document.getElementById('nameField').value;
+            const amt = document.getElementById('amountNum').value;
+
+            if(name) {
+                const data = {
+                    no: document.getElementById('slipNo').value,
+                    date: document.getElementById('dateField').value,
+                    name: name,
+                    amount: amt,
+                    mode: mode
+                };
+                let history = JSON.parse(localStorage.getItem('djym_history') || "[]");
+                history.unshift(data);
+                localStorage.setItem('djym_history', JSON.stringify(history));
+            }
+
+            let current = parseInt(localStorage.getItem('djym_slip_counter') || 1);
+            localStorage.setItem('djym_slip_counter', current + 1);
+            loadSlipNumber();
+
+            document.getElementById('nameField').value = "";
+            document.getElementById('addrField').value = "";
+            document.getElementById('amountWords').value = "";
+            document.getElementById('amountNum').value = "";
+            document.getElementById('modeOnline').value = "";
+            
+            renderHistoryTable();
+            alert("Saved! Ready for next slip.");
+        }
+
+        // 2. Download Image
+        function downloadImage() {
+            const receipt = document.getElementById('receipt');
+            const slipNo = document.getElementById('slipNo').value;
+            // Added useCORS: true to help with images if hosted later
+            html2canvas(receipt, { scale: 2, backgroundColor: "#fff8e1", useCORS: true }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `Receipt_${slipNo}.png`;
+                link.href = canvas.toDataURL("image/png");
+                link.click();
+            });
+        }
+
+        // 3. Reset / Set Number
+        function resetCounter() {
+            let newNum = prompt("Enter the starting Slip Number (e.g. 1):", "");
+            if (newNum && !isNaN(newNum)) {
+                localStorage.setItem('djym_slip_counter', parseInt(newNum));
+                loadSlipNumber();
+            }
+        }
+
+        // 4. Export to Excel/CSV
+        function exportCSV() {
+            const history = JSON.parse(localStorage.getItem('djym_history') || "[]");
+            let csvContent = "data:text/csv;charset=utf-8,No,Date,Name,Amount,Mode\n";
+            history.forEach(row => {
+                csvContent += `${row.no},${row.date},"${row.name}",${row.amount},"${row.mode}"\n`;
+            });
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "DJYM_History.csv");
+            document.body.appendChild(link);
+            link.click();
+        }
+
+        // Helper Functions
+        function loadSlipNumber() {
+            let val = localStorage.getItem('djym_slip_counter') || 1;
+            document.getElementById('slipNo').value = String(val).padStart(3, '0');
+        }
+
+        function toggleHistory() {
+            const el = document.getElementById('historySection');
+            el.style.display = (el.style.display === 'block') ? 'none' : 'block';
+        }
+
+        function renderHistoryTable() {
+            const history = JSON.parse(localStorage.getItem('djym_history') || "[]");
+            const tbody = document.getElementById('historyBody');
+            tbody.innerHTML = "";
+            history.forEach(item => {
+                tbody.innerHTML += `<tr><td>${item.no}</td><td>${item.name}</td><td>${item.amount}</td><td>${item.mode}</td></tr>`;
+            });
+        }
+    </script>
+</body>
+</html>
