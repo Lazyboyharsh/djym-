@@ -40,8 +40,8 @@
         .header, .row, .footer-row { position: relative; z-index: 2; }
         .header { text-align: center; margin-bottom: 20px; }
         .org-name { font-size: clamp(20px, 5vw, 32px); font-weight: 800; text-transform: uppercase; font-family: 'Roboto', sans-serif; }
-        .logo { position: absolute; top: 10px; left: 10px; width: 60px; height: 60px; z-index: 10; }
-        .logo img { width: 100%; height: auto; }
+        .logo { position: absolute; top: 10px; left: 10px; width: 90px; height: 90px; z-index: 10; }
+        .logo img { width: 100%; height: 90px; }
         
         .row { display: flex; justify-content: space-between; flex-wrap: wrap; margin-bottom: 12px; font-size: 18px; font-weight: bold; gap: 10px; align-items: center; }
         input { border: none; background: transparent; border-bottom: 1px dotted #800000; font-family: 'Courier New', monospace; font-size: 18px; color: #000080; font-weight: bold; width: 100%; outline: none; }
@@ -54,16 +54,16 @@
         
         /* Signature */
         .signature-area { text-align: center; width: 180px; }
-        .sign-img { height: 50px; border-bottom: 1px solid #800000; margin-bottom: 5px; display:flex; align-items:flex-end; justify-content:center;}
+        .sign-img { height: 90px; border-bottom: 1px solid #800000; margin-bottom: 5px; display:flex; align-items:flex-end; justify-content:center;}
         .sign-img img { max-height: 100%; max-width: 100%; }
 
-        /* QR Code Area - UPDATED FOR SIDE BY SIDE */
+        /* QR Code Area - Side by Side */
         .qr-area { 
             display: flex; 
-            flex-direction: row; /* Horizontal Layout */
+            flex-direction: row; 
             align-items: center; 
-            gap: 15px; /* Space between QR and Text */
-            border: 1px dashed #800000; /* Optional: Nice frame */
+            gap: 15px; 
+            border: 1px dashed #800000; 
             padding: 5px 10px;
             border-radius: 8px;
             background: rgba(255,255,255,0.6);
@@ -72,16 +72,16 @@
             border: 2px solid #800000; 
             padding: 3px; 
             background: white; 
-            flex-shrink: 0; /* Stop QR from shrinking */
+            flex-shrink: 0; 
         }
         .bank-details { 
             font-size: 11px; 
             font-weight: bold; 
-            text-align: left; /* Left align text */
+            text-align: left; 
             line-height: 1.4;
         }
 
-        /* Title Box (Payment Receipt) */
+        /* Title Box */
         .title-box { 
             border: 2px solid #800000; padding: 5px 15px; border-radius: 20px; 
             font-weight: bold; font-family: 'Roboto', sans-serif; background: #fff;
@@ -154,13 +154,9 @@
         <div class="row"><div class="input-group"><label>Purpose</label><input type="text" id="purposeField" value="Annual Rashi"></div></div>
 
         <div class="row">
-            <div class="input-group" style="flex-grow:0;">
-                <label>Cash</label>
-                <input type="text" style="width:60px;" value="Cash">
-            </div>
             <div class="input-group">
-                <label>Online Txn</label>
-                <input type="text" id="modeOnline" placeholder="UPI / Ref No">
+                <label>Mode of Payment</label>
+                <input type="text" id="paymentMode" placeholder="Cash / UPI / Cheque No.">
             </div>
         </div>
 
@@ -171,7 +167,6 @@
                 <div id="qrcode"></div>
                 <div class="bank-details">
                     Bank: Axis Bank<br>
-                    UPI: MAB.037215030470058@axisbank <br>
                     Name: Dharm Jagriti Yuva Mandal<br>
                     Acc No: 925020024236269<br>
                     IFSC: UTIB0003047
@@ -214,7 +209,7 @@
         const SUPABASE_URL = 'https://mfvfkvnkjtwydcmpxjot.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1mdmZrdm5ranR3eWRjbXB4am90Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYyMzE2NzQsImV4cCI6MjA4MTgwNzY3NH0.lKe6UXzo80elnvGy2JU2scQQNUzrpTiygItJULo1VNo';
         
-        // ⚠️ UPI ID FOR QR CODE (Change this)
+        // ⚠️ UPI ID FOR QR CODE
         const UPI_ID = "MAB.037215030470058@axisbank"; 
         // =================================================
 
@@ -266,7 +261,7 @@
             const qrData = `upi://pay?pa=${UPI_ID}&pn=DJYM`;
             new QRCode(document.getElementById("qrcode"), {
                 text: qrData,
-                width: 65, // Slightly smaller to fit layout
+                width: 65, 
                 height: 65,
                 colorDark : "#000000",
                 colorLight : "#ffffff",
@@ -298,8 +293,10 @@
             
             if(!name || !amt) { alert("Please fill Name and Amount!"); return; }
 
-            const onlineVal = document.getElementById('modeOnline').value;
-            const mode = onlineVal.trim() !== "" ? "Online (" + onlineVal + ")" : "Cash";
+            // NEW: Get Single Payment Mode
+            const modeInput = document.getElementById('paymentMode').value;
+            const mode = modeInput.trim() !== "" ? modeInput : "Cash"; // Default to Cash if empty
+
             const slipNo = document.getElementById('slipNo').value;
             const dateStr = document.getElementById('dateFieldDisplay').value;
 
@@ -336,7 +333,7 @@
                 document.getElementById('addrField').value = "";
                 document.getElementById('amountWords').value = "";
                 document.getElementById('amountNum').value = "";
-                document.getElementById('modeOnline').value = "";
+                document.getElementById('paymentMode').value = ""; // Clear the new input
 
                 let newNo = parseInt(slipNo) + 1;
                 document.getElementById('slipNo').value = String(newNo).padStart(3, '0');
