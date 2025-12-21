@@ -57,10 +57,29 @@
         .sign-img { height: 50px; border-bottom: 1px solid #800000; margin-bottom: 5px; display:flex; align-items:flex-end; justify-content:center;}
         .sign-img img { max-height: 100%; max-width: 100%; }
 
-        /* QR Code Area */
-        .qr-area { text-align: center; margin-top: 10px; display: flex; flex-direction: column; align-items: center; }
-        #qrcode { margin-bottom: 5px; border: 2px solid #800000; padding: 5px; background: white; }
-        .bank-details { font-size: 12px; font-weight: bold; margin-top: 5px; }
+        /* QR Code Area - UPDATED FOR SIDE BY SIDE */
+        .qr-area { 
+            display: flex; 
+            flex-direction: row; /* Horizontal Layout */
+            align-items: center; 
+            gap: 15px; /* Space between QR and Text */
+            border: 1px dashed #800000; /* Optional: Nice frame */
+            padding: 5px 10px;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.6);
+        }
+        #qrcode { 
+            border: 2px solid #800000; 
+            padding: 3px; 
+            background: white; 
+            flex-shrink: 0; /* Stop QR from shrinking */
+        }
+        .bank-details { 
+            font-size: 11px; 
+            font-weight: bold; 
+            text-align: left; /* Left align text */
+            line-height: 1.4;
+        }
 
         /* Title Box (Payment Receipt) */
         .title-box { 
@@ -152,6 +171,7 @@
                 <div id="qrcode"></div>
                 <div class="bank-details">
                     Bank: Axis Bank<br>
+                    UPI: MAB.037215030470058@axisbank <br>
                     Name: Dharm Jagriti Yuva Mandal<br>
                     Acc No: 925020024236269<br>
                     IFSC: UTIB0003047
@@ -246,8 +266,8 @@
             const qrData = `upi://pay?pa=${UPI_ID}&pn=DJYM`;
             new QRCode(document.getElementById("qrcode"), {
                 text: qrData,
-                width: 70,
-                height: 70,
+                width: 65, // Slightly smaller to fit layout
+                height: 65,
                 colorDark : "#000000",
                 colorLight : "#ffffff",
                 correctLevel : QRCode.CorrectLevel.H
