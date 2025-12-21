@@ -6,6 +6,7 @@
     <title>DJYM Cloud System (Supabase)</title>
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Tinos:wght@400;700&display=swap');
@@ -42,23 +43,37 @@
         .logo { position: absolute; top: 10px; left: 10px; width: 60px; height: 60px; z-index: 10; }
         .logo img { width: 100%; height: auto; }
         
-        .row { display: flex; justify-content: space-between; flex-wrap: wrap; margin-bottom: 12px; font-size: 18px; font-weight: bold; gap: 10px; }
+        .row { display: flex; justify-content: space-between; flex-wrap: wrap; margin-bottom: 12px; font-size: 18px; font-weight: bold; gap: 10px; align-items: center; }
         input { border: none; background: transparent; border-bottom: 1px dotted #800000; font-family: 'Courier New', monospace; font-size: 18px; color: #000080; font-weight: bold; width: 100%; outline: none; }
         .input-group { flex-grow: 1; min-width: 200px; display: flex; align-items: center; }
         .input-group label { white-space: nowrap; margin-right: 10px; }
 
+        /* Footer Layout */
         .footer-row { display: flex; justify-content: space-between; margin-top: 30px; flex-wrap: wrap; align-items: flex-end; }
         .amount-box { border: 2px solid #800000; border-radius: 10px; padding: 10px 20px; font-size: 24px; font-weight: bold; }
+        
+        /* Signature */
         .signature-area { text-align: center; width: 180px; }
         .sign-img { height: 50px; border-bottom: 1px solid #800000; margin-bottom: 5px; display:flex; align-items:flex-end; justify-content:center;}
         .sign-img img { max-height: 100%; max-width: 100%; }
+
+        /* QR Code Area */
+        .qr-area { text-align: center; margin-top: 10px; display: flex; flex-direction: column; align-items: center; }
+        #qrcode { margin-bottom: 5px; border: 2px solid #800000; padding: 5px; background: white; }
+        .bank-details { font-size: 12px; font-weight: bold; margin-top: 5px; }
+
+        /* Title Box (Payment Receipt) */
+        .title-box { 
+            border: 2px solid #800000; padding: 5px 15px; border-radius: 20px; 
+            font-weight: bold; font-family: 'Roboto', sans-serif; background: #fff;
+            text-transform: uppercase; font-size: 14px;
+        }
 
         /* CONTROLS */
         .controls { margin-top: 20px; width: 100%; max-width: 600px; display: flex; flex-direction: column; gap: 10px; }
         button { padding: 15px; font-size: 16px; color: white; border: none; cursor: pointer; border-radius: 8px; font-weight: bold; width: 100%; }
         
         .btn-db { background-color: #27ae60; } 
-        .btn-img { background-color: #d35400; }
         .btn-hist { background-color: #2980b9; }
         .btn-reset { background-color: #7f8c8d; padding: 10px; font-size: 14px;}
 
@@ -72,6 +87,8 @@
             .logo { position: relative; top: 0; left: 0; margin: 0 auto 10px auto; display:block; }
             .row { flex-direction: column; align-items: flex-start; gap: 5px; }
             .footer-row { flex-direction: column; align-items: center; gap: 20px; }
+            .top-row { flex-direction: column; align-items: center !important; gap: 10px; } 
+            .top-row .input-group { width: 100%; justify-content: space-between; }
         }
     </style>
 </head>
@@ -92,19 +109,23 @@
 
         <div class="header">
             <div style="font-size:14px; font-weight:bold;">!! Shri Mahaviraya Namah !!</div>
-            <div class="org-name">DHARAM JAGRITI YUVA MANDAL (DJYM)</div>
+            <div class="org-name">DHARM JAGRITI YUVA MANDAL (DJYM)</div>
             <div style="font-weight:bold;">UTTAM NAGAR, NEW DELHI - 110059</div>
-            <div style="font-weight:bold;">Contact No. : 9810765996, 9975080760</div>
+            <div style="font-weight:bold;">Contact No. : 9891432230</div>
         </div>
 
-        <div class="row">
-            <div class="input-group" style="flex-grow:0;">
+        <div class="row top-row" style="display: flex; justify-content: space-between; align-items: center;">
+            <div class="input-group" style="flex-grow:0; width: auto;">
                 <label>No.</label>
-                <input type="text" id="slipNo" style="width:80px; text-align:center;" readonly>
+                <input type="text" id="slipNo" style="width:60px; text-align:center;" readonly>
             </div>
-            <div class="input-group" style="justify-content: flex-end;">
+            
+            <div class="title-box">Payment Receipt</div>
+
+            <div class="input-group" style="flex-grow:0; width: auto; justify-content: flex-end;">
                 <label>Dated</label>
-                <input type="date" id="dateField">
+                <input type="text" id="dateFieldDisplay" style="width: 120px; text-align: right;" placeholder="DD-MM-YYYY">
+                <input type="date" id="datePicker" style="position:absolute; visibility:hidden;"> 
             </div>
         </div>
 
@@ -126,6 +147,17 @@
 
         <div class="footer-row">
             <div class="amount-box">Rs. <input type="number" id="amountNum" placeholder="0" style="width:100px; border:none; font-size:24px;"> /-</div>
+            
+            <div class="qr-area">
+                <div id="qrcode"></div>
+                <div class="bank-details">
+                    Bank: Axis Bank<br>
+                    Name: Dharm Jagriti Yuva Mandal<br>
+                    Acc No: 925020024236269<br>
+                    IFSC: UTIB0003047
+                </div>
+            </div>
+
             <div class="signature-area">
                 <div class="sign-img"><img src="sign.png" alt="Sign" onerror="this.style.display='none'"></div>
                 <div>Receiver Signature</div>
@@ -134,8 +166,8 @@
     </div>
 
     <div class="controls">
-        <button id="btnSave" class="btn-db" onclick="saveToCloud()">☁️ Save to Cloud & Next</button>
-        <button class="btn-img" onclick="downloadImage()">📸 Download Image</button>
+        <button id="btnSave" class="btn-db" onclick="saveToCloudAndDownload()">☁️ Save to Cloud & Download Image</button>
+        
         <div style="display:flex; gap:10px; width:100%;">
             <button class="btn-hist" onclick="loadHistory()">🌍 Load Global History</button>
             <button class="btn-reset" onclick="resetCounter()">⚠️ Reset No.</button>
@@ -158,18 +190,47 @@
         // ================= CONFIGURATION =================
         const MY_PASSWORD = "1234"; 
 
-        // ⚠️ PASTE SUPABASE KEYS HERE ⚠️
+        // ⚠️ SUPABASE KEYS 
         const SUPABASE_URL = 'https://mfvfkvnkjtwydcmpxjot.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1mdmZrdm5ranR3eWRjbXB4am90Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYyMzE2NzQsImV4cCI6MjA4MTgwNzY3NH0.lKe6UXzo80elnvGy2JU2scQQNUzrpTiygItJULo1VNo';
+        
+        // ⚠️ UPI ID FOR QR CODE (Change this)
+        const UPI_ID = "MAB.037215030470058@axisbank"; 
         // =================================================
 
         const { createClient } = supabase;
         const _supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
         window.onload = function() {
+            // Password Check
             document.getElementById("passInput").addEventListener("keyup", function(event) {
                 if (event.key === "Enter") { checkPassword(); }
             });
+
+            // Date Picker Logic
+            const displayDate = document.getElementById("dateFieldDisplay");
+            const realDate = document.getElementById("datePicker");
+
+            displayDate.addEventListener('click', () => {
+                try { realDate.showPicker(); } 
+                catch (e) { realDate.focus(); }
+            });
+
+            realDate.addEventListener('change', (e) => {
+                if(realDate.value) {
+                    const parts = realDate.value.split("-"); 
+                    displayDate.value = `${parts[2]}-${parts[1]}-${parts[0]}`; 
+                }
+            });
+
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const dd = String(today.getDate()).padStart(2, '0');
+            realDate.value = `${yyyy}-${mm}-${dd}`;
+            displayDate.value = `${dd}-${mm}-${yyyy}`;
+
+            generateQR();
         };
 
         function checkPassword() {
@@ -181,8 +242,19 @@
             }
         }
 
+        function generateQR() {
+            const qrData = `upi://pay?pa=${UPI_ID}&pn=DJYM`;
+            new QRCode(document.getElementById("qrcode"), {
+                text: qrData,
+                width: 70,
+                height: 70,
+                colorDark : "#000000",
+                colorLight : "#ffffff",
+                correctLevel : QRCode.CorrectLevel.H
+            });
+        }
+
         async function initApp() {
-            // Fetch the last slip number from the database to stay synced
             const { data, error } = await _supabase
                 .from('receipts')
                 .select('slip_no')
@@ -193,13 +265,11 @@
             if (data && data.length > 0) {
                 nextNo = parseInt(data[0].slip_no) + 1;
             }
-            
             document.getElementById('slipNo').value = String(nextNo).padStart(3, '0');
-            document.getElementById('dateField').value = new Date().toISOString().split('T')[0];
         }
 
-        // --- SAVE TO SUPABASE ---
-        async function saveToCloud() {
+        // --- SAVE TO SUPABASE + DOWNLOAD ---
+        async function saveToCloudAndDownload() {
             const btn = document.getElementById('btnSave');
             const msg = document.getElementById('statusMsg');
             
@@ -210,17 +280,18 @@
 
             const onlineVal = document.getElementById('modeOnline').value;
             const mode = onlineVal.trim() !== "" ? "Online (" + onlineVal + ")" : "Cash";
-            
             const slipNo = document.getElementById('slipNo').value;
+            const dateStr = document.getElementById('dateFieldDisplay').value;
 
             btn.disabled = true;
             btn.innerText = "Saving to Database...";
 
+            // 1. SAVE TO DATABASE
             const { error } = await _supabase
                 .from('receipts')
                 .insert({
                     slip_no: slipNo,
-                    date: document.getElementById('dateField').value,
+                    date: dateStr,
                     name: name,
                     address: document.getElementById('addrField').value,
                     words: document.getElementById('amountWords').value,
@@ -234,27 +305,48 @@
                 msg.style.color = "red";
                 btn.disabled = false;
             } else {
-                msg.innerText = "✅ Saved Globally!";
+                msg.innerText = "✅ Saved! Downloading Image...";
                 msg.style.color = "green";
                 
-                // Clear Form
+                // 2. DOWNLOAD IMAGE (Wait for it to finish)
+                await downloadImagePromise();
+
+                // 3. CLEAR FORM & UPDATE
                 document.getElementById('nameField').value = "";
                 document.getElementById('addrField').value = "";
                 document.getElementById('amountWords').value = "";
                 document.getElementById('amountNum').value = "";
                 document.getElementById('modeOnline').value = "";
 
-                // Update Slip No
                 let newNo = parseInt(slipNo) + 1;
                 document.getElementById('slipNo').value = String(newNo).padStart(3, '0');
                 
                 btn.disabled = false;
-                btn.innerText = "☁️ Save to Cloud & Next";
+                btn.innerText = "☁️ Save to Cloud & Download Image";
                 setTimeout(() => msg.innerText = "", 3000);
             }
         }
 
-        // --- LOAD HISTORY FROM SUPABASE ---
+        // Wrapper to make downloadImage await-able
+        function downloadImagePromise() {
+            return new Promise((resolve) => {
+                const receipt = document.getElementById('receipt');
+                const slipNo = document.getElementById('slipNo').value;
+                const options = { scale: 2, backgroundColor: "#fff8e1", useCORS: true, windowWidth: 800, width: 800 };
+                const originalWidth = receipt.style.width;
+                receipt.style.width = "800px";
+                
+                html2canvas(receipt, options).then(canvas => {
+                    const link = document.createElement('a');
+                    link.download = `Receipt_${slipNo}.png`;
+                    link.href = canvas.toDataURL("image/png");
+                    link.click();
+                    receipt.style.width = originalWidth;
+                    resolve(); // Signal done
+                });
+            });
+        }
+
         async function loadHistory() {
             const section = document.getElementById('historySection');
             const tbody = document.getElementById('historyBody');
@@ -265,7 +357,7 @@
                 .from('receipts')
                 .select('*')
                 .order('id', { ascending: false })
-                .limit(50); // Get last 50 receipts
+                .limit(50);
 
             if (error) {
                 alert("Error loading history");
@@ -280,21 +372,6 @@
                     <td>${item.amount}</td>
                     <td>${item.mode}</td>
                 </tr>`;
-            });
-        }
-
-        function downloadImage() {
-            const receipt = document.getElementById('receipt');
-            const slipNo = document.getElementById('slipNo').value;
-            const options = { scale: 2, backgroundColor: "#fff8e1", useCORS: true, windowWidth: 800, width: 800 };
-            const originalWidth = receipt.style.width;
-            receipt.style.width = "800px";
-            html2canvas(receipt, options).then(canvas => {
-                const link = document.createElement('a');
-                link.download = `Receipt_${slipNo}.png`;
-                link.href = canvas.toDataURL("image/png");
-                link.click();
-                receipt.style.width = originalWidth;
             });
         }
         
