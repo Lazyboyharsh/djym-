@@ -3,86 +3,66 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DJYM Secure Receipt</title>
+    <title>DJYM Cloud System (Supabase)</title>
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Tinos:wght@400;700&display=swap');
-
-        /* --- GLOBAL STYLES --- */
+        
         body { font-family: 'Tinos', serif; background-color: #f0f0f0; display: flex; flex-direction: column; align-items: center; padding: 10px; margin: 0; }
         
-        /* --- LOGIN SCREEN STYLES (NEW) --- */
+        /* LOGIN */
         #loginOverlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background-color: #2c3e50; /* Dark Blue Background */
-            z-index: 9999; /* Sit on top of everything */
+            background-color: #2c3e50; z-index: 9999;
             display: flex; justify-content: center; align-items: center;
         }
         .login-box {
-            background: white; padding: 40px; border-radius: 10px;
-            text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-            width: 300px; font-family: 'Roboto', sans-serif;
+            background: white; padding: 30px; border-radius: 10px; text-align: center; width: 280px;
+            font-family: 'Roboto', sans-serif; box-shadow: 0 10px 25px rgba(0,0,0,0.5);
         }
-        .login-box h2 { margin-top: 0; color: #800000; }
-        .login-input {
-            width: 100%; padding: 10px; margin: 15px 0;
-            font-size: 18px; text-align: center; border: 2px solid #ddd; border-radius: 5px;
-            box-sizing: border-box;
-        }
-        .login-btn {
-            width: 100%; padding: 10px; background-color: #800000; color: white;
-            border: none; border-radius: 5px; font-size: 18px; cursor: pointer;
-        }
-        .login-btn:hover { background-color: #600000; }
-        .error-msg { color: red; font-weight: bold; margin-top: 10px; display: none; }
+        .login-input { width: 100%; padding: 10px; margin: 15px 0; font-size: 18px; text-align: center; box-sizing: border-box; }
+        .login-btn { width: 100%; padding: 10px; background-color: #800000; color: white; border: none; font-size: 18px; cursor: pointer; }
 
-        /* --- RECEIPT STYLES --- */
+        /* RECEIPT */
         .receipt-box { 
             width: 100%; max-width: 800px; background-color: #fff8e1; 
             border: 4px dashed #800000; padding: 20px; color: #800000; 
             position: relative; box-sizing: border-box; overflow: hidden;
         }
-
-        /* Watermark */
         .watermark {
-            position: absolute; top: 50%; left: 50%;
-            transform: translate(-50%, -50%) rotate(-30deg);
-            font-size: clamp(80px, 15vw, 150px);
-            font-family: 'Roboto', sans-serif; font-weight: 900; color: #800000;
-            opacity: 0.08; z-index: 0; pointer-events: none; user-select: none; white-space: nowrap;
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-30deg);
+            font-size: clamp(80px, 15vw, 150px); font-family: 'Roboto', sans-serif; font-weight: 900; 
+            color: #800000; opacity: 0.08; z-index: 0; pointer-events: none; user-select: none;
         }
-        
-        /* Header, Rows, etc. */
         .header, .row, .footer-row { position: relative; z-index: 2; }
         .header { text-align: center; margin-bottom: 20px; }
         .org-name { font-size: clamp(20px, 5vw, 32px); font-weight: 800; text-transform: uppercase; font-family: 'Roboto', sans-serif; }
-        
         .logo { position: absolute; top: 10px; left: 10px; width: 60px; height: 60px; z-index: 10; }
         .logo img { width: 100%; height: auto; }
-
+        
         .row { display: flex; justify-content: space-between; flex-wrap: wrap; margin-bottom: 12px; font-size: 18px; font-weight: bold; gap: 10px; }
         input { border: none; background: transparent; border-bottom: 1px dotted #800000; font-family: 'Courier New', monospace; font-size: 18px; color: #000080; font-weight: bold; width: 100%; outline: none; }
         .input-group { flex-grow: 1; min-width: 200px; display: flex; align-items: center; }
         .input-group label { white-space: nowrap; margin-right: 10px; }
-        
+
         .footer-row { display: flex; justify-content: space-between; margin-top: 30px; flex-wrap: wrap; align-items: flex-end; }
         .amount-box { border: 2px solid #800000; border-radius: 10px; padding: 10px 20px; font-size: 24px; font-weight: bold; }
-        
         .signature-area { text-align: center; width: 180px; }
         .sign-img { height: 50px; border-bottom: 1px solid #800000; margin-bottom: 5px; display:flex; align-items:flex-end; justify-content:center;}
         .sign-img img { max-height: 100%; max-width: 100%; }
 
-        /* Controls */
+        /* CONTROLS */
         .controls { margin-top: 20px; width: 100%; max-width: 600px; display: flex; flex-direction: column; gap: 10px; }
-        .btn-row { display: flex; gap: 10px; }
         button { padding: 15px; font-size: 16px; color: white; border: none; cursor: pointer; border-radius: 8px; font-weight: bold; width: 100%; }
-        .btn-green { background-color: #27ae60; } 
-        .btn-orange { background-color: #d35400; }
-        .btn-blue { background-color: #2980b9; }
-        .btn-gray { background-color: #7f8c8d; font-size: 14px; padding: 10px; }
+        
+        .btn-db { background-color: #27ae60; } 
+        .btn-img { background-color: #d35400; }
+        .btn-hist { background-color: #2980b9; }
+        .btn-reset { background-color: #7f8c8d; padding: 10px; font-size: 14px;}
 
-        /* History */
+        /* HISTORY TABLE */
         #historySection { display: none; margin-top: 20px; width: 100%; max-width: 800px; background: white; padding: 20px; border-radius: 10px; overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; margin-top: 10px; min-width: 500px; }
         th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
@@ -92,7 +72,6 @@
             .logo { position: relative; top: 0; left: 0; margin: 0 auto 10px auto; display:block; }
             .row { flex-direction: column; align-items: flex-start; gap: 5px; }
             .footer-row { flex-direction: column; align-items: center; gap: 20px; }
-            .btn-row { flex-direction: column; }
         }
     </style>
 </head>
@@ -100,11 +79,10 @@
 
     <div id="loginOverlay">
         <div class="login-box">
-            <h2>DJYM Login</h2>
-            <p>Please enter password to access</p>
-            <input type="password" id="passInput" class="login-input" placeholder="Password">
-            <button onclick="checkPassword()" class="login-btn">Unlock</button>
-            <div id="errorMsg" class="error-msg">❌ Wrong Password</div>
+            <h2 style="color:#800000; margin-top:0;">SECURE LOGIN</h2>
+            <input type="password" id="passInput" class="login-input" placeholder="Enter Password">
+            <button onclick="checkPassword()" class="login-btn">Unlock System</button>
+            <div id="errorMsg" style="color:red; display:none; margin-top:10px;">❌ Incorrect Password</div>
         </div>
     </div>
 
@@ -156,18 +134,19 @@
     </div>
 
     <div class="controls">
-        <button class="btn-orange" onclick="downloadImage()">📸 Download Receipt Image</button>
-        <button class="btn-green" onclick="generateNextSlip()">➡️ Next Slip (Save & Clear)</button>
-        <div class="btn-row">
-            <button class="btn-blue" onclick="toggleHistory()">📜 View History</button>
-            <button class="btn-gray" onclick="resetCounter()">⚠️ Set Start Number</button>
+        <button id="btnSave" class="btn-db" onclick="saveToCloud()">☁️ Save to Cloud & Next</button>
+        <button class="btn-img" onclick="downloadImage()">📸 Download Image</button>
+        <div style="display:flex; gap:10px; width:100%;">
+            <button class="btn-hist" onclick="loadHistory()">🌍 Load Global History</button>
+            <button class="btn-reset" onclick="resetCounter()">⚠️ Reset No.</button>
         </div>
+        <div id="statusMsg" style="text-align:center; font-weight:bold; margin-top:5px; height:20px;"></div>
     </div>
 
     <div id="historySection">
         <div style="display:flex; justify-content:space-between; align-items:center;">
-            <h3>Saved History</h3>
-            <button class="btn-gray" style="width:auto;" onclick="exportCSV()">⬇️ Download Excel/CSV</button>
+            <h3>Global Database History</h3>
+            <button class="btn-reset" style="width:auto;" onclick="document.getElementById('historySection').style.display='none'">Close</button>
         </div>
         <table>
             <thead><tr><th>No.</th><th>Name</th><th>Amount</th><th>Mode</th></tr></thead>
@@ -176,126 +155,152 @@
     </div>
 
     <script>
-        // **********************************************
-        // 🔑 SET YOUR PASSWORD HERE:
-        const MY_PASSWORD = "1234";
-        // **********************************************
+        // ================= CONFIGURATION =================
+        const MY_PASSWORD = "1234"; 
+
+        // ⚠️ PASTE SUPABASE KEYS HERE ⚠️
+        const SUPABASE_URL = 'https://mfvfkvnkjtwydcmpxjot.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1mdmZrdm5ranR3eWRjbXB4am90Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYyMzE2NzQsImV4cCI6MjA4MTgwNzY3NH0.lKe6UXzo80elnvGy2JU2scQQNUzrpTiygItJULo1VNo';
+        // =================================================
+
+        const { createClient } = supabase;
+        const _supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
         window.onload = function() {
-            // Wait for password check before loading sensitive data
-            // loadSlipNumber(); 
-            // document.getElementById('dateField').value = new Date().toISOString().split('T')[0];
-            
-            // Allow "Enter" key to submit password
             document.getElementById("passInput").addEventListener("keyup", function(event) {
                 if (event.key === "Enter") { checkPassword(); }
             });
         };
 
-        // --- PASSWORD FUNCTION ---
         function checkPassword() {
-            const input = document.getElementById('passInput').value;
-            const overlay = document.getElementById('loginOverlay');
-            const error = document.getElementById('errorMsg');
-
-            if (input === MY_PASSWORD) {
-                // Unlock!
-                overlay.style.display = "none";
-                // Now load the app data
-                loadSlipNumber();
-                document.getElementById('dateField').value = new Date().toISOString().split('T')[0];
-                renderHistoryTable();
+            if (document.getElementById('passInput').value === MY_PASSWORD) {
+                document.getElementById('loginOverlay').style.display = "none";
+                initApp();
             } else {
-                // Wrong password
-                error.style.display = "block";
-                document.getElementById('passInput').value = "";
+                document.getElementById('errorMsg').style.display = "block";
             }
         }
 
-        // --- APP LOGIC (Same as before) ---
-        
-        function generateNextSlip() {
-            const onlineVal = document.getElementById('modeOnline').value;
-            const mode = onlineVal.trim() !== "" ? "Online (" + onlineVal + ")" : "Cash";
+        async function initApp() {
+            // Fetch the last slip number from the database to stay synced
+            const { data, error } = await _supabase
+                .from('receipts')
+                .select('slip_no')
+                .order('id', { ascending: false })
+                .limit(1);
+
+            let nextNo = 1;
+            if (data && data.length > 0) {
+                nextNo = parseInt(data[0].slip_no) + 1;
+            }
+            
+            document.getElementById('slipNo').value = String(nextNo).padStart(3, '0');
+            document.getElementById('dateField').value = new Date().toISOString().split('T')[0];
+        }
+
+        // --- SAVE TO SUPABASE ---
+        async function saveToCloud() {
+            const btn = document.getElementById('btnSave');
+            const msg = document.getElementById('statusMsg');
+            
             const name = document.getElementById('nameField').value;
             const amt = document.getElementById('amountNum').value;
+            
+            if(!name || !amt) { alert("Please fill Name and Amount!"); return; }
 
-            if(name) {
-                const data = {
-                    no: document.getElementById('slipNo').value,
+            const onlineVal = document.getElementById('modeOnline').value;
+            const mode = onlineVal.trim() !== "" ? "Online (" + onlineVal + ")" : "Cash";
+            
+            const slipNo = document.getElementById('slipNo').value;
+
+            btn.disabled = true;
+            btn.innerText = "Saving to Database...";
+
+            const { error } = await _supabase
+                .from('receipts')
+                .insert({
+                    slip_no: slipNo,
                     date: document.getElementById('dateField').value,
                     name: name,
+                    address: document.getElementById('addrField').value,
+                    words: document.getElementById('amountWords').value,
                     amount: amt,
                     mode: mode
-                };
-                let history = JSON.parse(localStorage.getItem('djym_history') || "[]");
-                history.unshift(data);
-                localStorage.setItem('djym_history', JSON.stringify(history));
+                });
+
+            if (error) {
+                console.error(error);
+                msg.innerText = "❌ Error Saving.";
+                msg.style.color = "red";
+                btn.disabled = false;
+            } else {
+                msg.innerText = "✅ Saved Globally!";
+                msg.style.color = "green";
+                
+                // Clear Form
+                document.getElementById('nameField').value = "";
+                document.getElementById('addrField').value = "";
+                document.getElementById('amountWords').value = "";
+                document.getElementById('amountNum').value = "";
+                document.getElementById('modeOnline').value = "";
+
+                // Update Slip No
+                let newNo = parseInt(slipNo) + 1;
+                document.getElementById('slipNo').value = String(newNo).padStart(3, '0');
+                
+                btn.disabled = false;
+                btn.innerText = "☁️ Save to Cloud & Next";
+                setTimeout(() => msg.innerText = "", 3000);
+            }
+        }
+
+        // --- LOAD HISTORY FROM SUPABASE ---
+        async function loadHistory() {
+            const section = document.getElementById('historySection');
+            const tbody = document.getElementById('historyBody');
+            section.style.display = "block";
+            tbody.innerHTML = "<tr><td colspan='4'>Loading...</td></tr>";
+
+            const { data, error } = await _supabase
+                .from('receipts')
+                .select('*')
+                .order('id', { ascending: false })
+                .limit(50); // Get last 50 receipts
+
+            if (error) {
+                alert("Error loading history");
+                return;
             }
 
-            let current = parseInt(localStorage.getItem('djym_slip_counter') || 1);
-            localStorage.setItem('djym_slip_counter', current + 1);
-            loadSlipNumber();
-
-            document.getElementById('nameField').value = "";
-            document.getElementById('addrField').value = "";
-            document.getElementById('amountWords').value = "";
-            document.getElementById('amountNum').value = "";
-            document.getElementById('modeOnline').value = "";
-            renderHistoryTable();
-            alert("Saved! Ready for next slip.");
+            tbody.innerHTML = "";
+            data.forEach(item => {
+                tbody.innerHTML += `<tr>
+                    <td>${item.slip_no}</td>
+                    <td>${item.name}</td>
+                    <td>${item.amount}</td>
+                    <td>${item.mode}</td>
+                </tr>`;
+            });
         }
 
         function downloadImage() {
             const receipt = document.getElementById('receipt');
             const slipNo = document.getElementById('slipNo').value;
-            html2canvas(receipt, { scale: 2, backgroundColor: "#fff8e1", useCORS: true }).then(canvas => {
+            const options = { scale: 2, backgroundColor: "#fff8e1", useCORS: true, windowWidth: 800, width: 800 };
+            const originalWidth = receipt.style.width;
+            receipt.style.width = "800px";
+            html2canvas(receipt, options).then(canvas => {
                 const link = document.createElement('a');
                 link.download = `Receipt_${slipNo}.png`;
                 link.href = canvas.toDataURL("image/png");
                 link.click();
+                receipt.style.width = originalWidth;
             });
         }
-
+        
         function resetCounter() {
-            let newNum = prompt("Enter the starting Slip Number (e.g. 1):", "");
-            if (newNum && !isNaN(newNum)) {
-                localStorage.setItem('djym_slip_counter', parseInt(newNum));
-                loadSlipNumber();
-            }
-        }
-
-        function exportCSV() {
-            const history = JSON.parse(localStorage.getItem('djym_history') || "[]");
-            let csvContent = "data:text/csv;charset=utf-8,No,Date,Name,Amount,Mode\n";
-            history.forEach(row => {
-                csvContent += `${row.no},${row.date},"${row.name}",${row.amount},"${row.mode}"\n`;
-            });
-            const encodedUri = encodeURI(csvContent);
-            const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", "DJYM_History.csv");
-            document.body.appendChild(link);
-            link.click();
-        }
-
-        function loadSlipNumber() {
-            let val = localStorage.getItem('djym_slip_counter') || 1;
-            document.getElementById('slipNo').value = String(val).padStart(3, '0');
-        }
-
-        function toggleHistory() {
-            const el = document.getElementById('historySection');
-            el.style.display = (el.style.display === 'block') ? 'none' : 'block';
-        }
-
-        function renderHistoryTable() {
-            const history = JSON.parse(localStorage.getItem('djym_history') || "[]");
-            const tbody = document.getElementById('historyBody');
-            tbody.innerHTML = "";
-            history.forEach(item => {
-                tbody.innerHTML += `<tr><td>${item.no}</td><td>${item.name}</td><td>${item.amount}</td><td>${item.mode}</td></tr>`;
-            });
+            let newNum = prompt("Enter new Start Number:", "1");
+            if(newNum) document.getElementById('slipNo').value = String(newNum).padStart(3, '0');
         }
     </script>
 </body>
